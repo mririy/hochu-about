@@ -23,6 +23,69 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="description" content="Как ХОЧУ помогает найти, куда сходить в Москве, и почему он становится новым каналом для событий, которых нет на больших афишах.">
 <script>document.documentElement.classList.add('js')</script>
+<script>
+/* preloader: the whole page loads behind the jumping logo, then the curtain lifts */
+(() => {
+  const root = document.documentElement;
+  root.classList.add('is-loading');
+  const pre = window.__pre = { ready: false, cbs: [], onReady(f) { this.ready ? f() : this.cbs.push(f); } };
+  const t0 = performance.now(), MIN = 1100, MAX = 10000, CYCLE = 10.5833 / 5, LANDED = 0.95;
+  const stop = e => { if (root.classList.contains('is-loading')) e.preventDefault(); };
+  const keys = [' ', 'ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End'];
+  addEventListener('wheel', stop, { passive: false });
+  addEventListener('touchmove', stop, { passive: false });
+  addEventListener('keydown', e => { if (keys.includes(e.key)) stop(e); });
+  let lifted = false;
+  const lift = () => {
+    if (lifted) return;
+    lifted = true;
+    pre.ready = true;
+    pre.cbs.splice(0).forEach(f => { try { f(); } catch (_) {} });
+    /* let the logo land before the curtain goes */
+    const lv = document.querySelector('.preloader video');
+    let wait = Math.max(0, MIN - (performance.now() - t0));
+    if (lv && !lv.paused && lv.readyState > 1) { const t = lv.currentTime % CYCLE; if (t < LANDED) wait = Math.max(wait, (LANDED - t) * 1000); }
+    setTimeout(() => {
+      root.classList.remove('is-loading');
+      root.classList.add('is-loaded');
+      removeEventListener('wheel', stop);
+      removeEventListener('touchmove', stop);
+      setTimeout(() => { const el = document.getElementById('preloader'); if (el) el.remove(); root.classList.remove('is-loaded'); }, 700);
+    }, wait);
+  };
+  setTimeout(lift, MAX);
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const lv = document.querySelector('.preloader video');
+      if (lv && !lv.getAttribute('src') && lv.dataset.media && window.__media) { lv.src = window.__media(lv.dataset.media); const p = lv.play(); if (p && p.catch) p.catch(() => {}); }
+      const waits = [];
+      const settle = el => new Promise(r => { el.addEventListener('load', r, { once: true }); el.addEventListener('error', r, { once: true }); });
+      /* every picture, including the ones further down the page */
+      const seen = new Set();
+      document.querySelectorAll('img').forEach(i => {
+        if (i.loading === 'lazy') i.loading = 'eager';
+        const u = i.currentSrc || i.src;
+        if (u && !seen.has(u)) { seen.add(u); const im = new Image(); waits.push(settle(im)); im.src = u; }
+      });
+      document.querySelectorAll('video[poster]').forEach(v => { const u = v.getAttribute('poster'); if (u && !seen.has(u)) { seen.add(u); const im = new Image(); waits.push(settle(im)); im.src = u; } });
+      /* every video, fetched whole and then played from memory */
+      const byUrl = new Map();
+      document.querySelectorAll('video[src]').forEach(v => {
+        if (v.closest('.preloader')) return;
+        const u = v.getAttribute('src');
+        if (!byUrl.has(u)) byUrl.set(u, []);
+        byUrl.get(u).push(v);
+      });
+      byUrl.forEach((list, u) => waits.push(fetch(u).then(r => r.ok ? r.blob() : null).then(b => {
+        if (b && !lifted) { const url = URL.createObjectURL(b); list.forEach(v => { v.src = url; }); }
+      }).catch(() => {})));
+      if (document.fonts && document.fonts.ready) waits.push(document.fonts.ready.catch(() => {}));
+      waits.push(new Promise(r => { if (document.readyState === 'complete') r(); else addEventListener('load', r, { once: true }); }));
+      Promise.all(waits).then(lift, lift);
+    } catch (_) { lift(); }
+  });
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800;900&display=swap">
@@ -755,10 +818,20 @@ html.js .nstep.is-on { opacity: 1; }
   .lev, .cue .i, .beat, .fx-lev { animation: none; }
   .tilt .phone { transform: none; }
 }
+/* ---------- preloader: the logo jumps while the whole page loads (only with script; without it the page shows at once) ---------- */
+.preloader { display: none; }
+html.is-loading .preloader, html.is-loaded .preloader { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #fff;
+  transition: opacity .6s var(--ease), visibility 0s linear .6s; }
+html.is-loaded .preloader { opacity: 0; visibility: hidden; pointer-events: none; }
+.preloader video { width: clamp(140px, 40vw, 172px); height: auto; aspect-ratio: 480 / 600; background: #fff;
+  -webkit-mask-image: radial-gradient(closest-side, #000 76%, transparent); mask-image: radial-gradient(closest-side, #000 76%, transparent); }
+/* the opening of the first screen waits for the curtain */
+html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .hero .phone-wrap, .pop, .cue) { animation-play-state: paused; }
 </style>
 
 </head>
 <body>
+<div class="preloader" id="preloader" role="status" aria-label="Загрузка"><video src="assets/loader.mp4" poster="assets/loader.webp" muted playsinline autoplay loop preload="auto" aria-hidden="true"></video></div>
 <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v16m-6-6 6 6 6-6"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V4M6 10l6-6 6 6"/></symbol>
@@ -1386,12 +1459,14 @@ html.js .nstep.is-on { opacity: 1; }
   const syncVideo = v => {
     const off = v.classList.contains('layer') && !v.classList.contains('is-on');
     const want = v._vis && !off && !v._held && (!reduce || v._asked);
+    if (want && window.__pre && !window.__pre.ready) return; /* nothing plays until the page has loaded */
     if (want) { if (v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } }
     else if (!v.paused) v.pause();
   };
-  const vids = [...d.querySelectorAll('video')];
+  const vids = [...d.querySelectorAll('video')].filter(v => !v.closest('.preloader'));
   const vidIO = new IntersectionObserver(es => es.forEach(e => { e.target._vis = e.isIntersecting; syncVideo(e.target); }), { threshold: 0.2 });
   vids.forEach(v => vidIO.observe(v));
+  if (window.__pre) window.__pre.onReady(() => vids.forEach(syncVideo));
   d.querySelectorAll('.phone').forEach(ph => ph.addEventListener('click', () => {
     const v = ph.querySelector('video.is-on') || ph.querySelector('video:not(.layer)');
     if (!v) return;
