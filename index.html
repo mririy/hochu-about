@@ -60,32 +60,16 @@
       if (lv && !lv.getAttribute('src') && lv.dataset.media && window.__media) { lv.src = window.__media(lv.dataset.media); const p = lv.play(); if (p && p.catch) p.catch(() => {}); }
       const waits = [];
       const settle = el => new Promise(r => { el.addEventListener('load', r, { once: true }); el.addEventListener('error', r, { once: true }); });
-      /* every picture, including the ones further down the page */
+      /* every picture and video is downloaded into the browser cache; the page itself still shows and plays them as before */
       const seen = new Set();
       document.querySelectorAll('img').forEach(i => {
-        if (i.loading === 'lazy') i.loading = 'eager';
         const u = i.currentSrc || i.src;
         if (u && !seen.has(u)) { seen.add(u); const im = new Image(); waits.push(settle(im)); im.src = u; }
       });
       document.querySelectorAll('video[poster]').forEach(v => { const u = v.getAttribute('poster'); if (u && !seen.has(u)) { seen.add(u); const im = new Image(); waits.push(settle(im)); im.src = u; } });
-      /* every video, fetched whole and then played from memory */
-      const byUrl = new Map();
-      document.querySelectorAll('video[src]').forEach(v => {
-        if (v.closest('.preloader')) return;
-        const u = v.getAttribute('src');
-        if (!byUrl.has(u)) byUrl.set(u, []);
-        byUrl.get(u).push(v);
-      });
-      byUrl.forEach((list, u) => waits.push(fetch(u).then(r => r.ok ? r.blob() : null).then(b => {
-        if (b && !lifted) {
-          const url = URL.createObjectURL(b);
-          /* a phone that will not play from memory goes back to the file itself */
-          list.forEach(v => {
-            v.addEventListener('error', () => { if (v.getAttribute('src') === url) { v.src = u; if (pre.resync) pre.resync(v); } }, { once: true });
-            v.src = url;
-          });
-        }
-      }).catch(() => {})));
+      const vurls = new Set();
+      document.querySelectorAll('video[src]').forEach(v => { if (!v.closest('.preloader')) vurls.add(v.getAttribute('src')); });
+      vurls.forEach(u => waits.push(fetch(u).then(r => r.ok ? r.arrayBuffer() : null).catch(() => {})));
       if (document.fonts && document.fonts.ready) waits.push(document.fonts.ready.catch(() => {}));
       waits.push(new Promise(r => { if (document.readyState === 'complete') r(); else addEventListener('load', r, { once: true }); }));
       Promise.all(waits).then(lift, lift);
@@ -99,14 +83,14 @@
 <style>
 /* Layout: one full-bleed colour stage that morphs chapter by chapter (palettes of the ХОЧУ landing).
    Every chapter carries one idea: a big line, one picture, little text. Phones get a single column. */
-@property --bg     { syntax: "<color>"; inherits: true; initial-value: transparent; }
-@property --fg     { syntax: "<color>"; inherits: true; initial-value: transparent; }
-@property --muted  { syntax: "<color>"; inherits: true; initial-value: transparent; }
-@property --accent { syntax: "<color>"; inherits: true; initial-value: transparent; }
-@property --aura   { syntax: "<color>"; inherits: true; initial-value: transparent; }
-@property --band   { syntax: "<color>"; inherits: true; initial-value: transparent; }
-@property --card   { syntax: "<color>"; inherits: true; initial-value: transparent; }
-@property --line   { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --bg     { syntax: "<color>"; inherits: true; initial-value: #079fee; }
+@property --fg     { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+@property --muted  { syntax: "<color>"; inherits: true; initial-value: #e3f5ff; }
+@property --accent { syntax: "<color>"; inherits: true; initial-value: #c6f1ff; }
+@property --aura   { syntax: "<color>"; inherits: true; initial-value: #a0e9ff; }
+@property --band   { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.16); }
+@property --card   { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.14); }
+@property --line   { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.32); }
 
 :root {
   /* stage colours (switched per chapter) */
@@ -133,10 +117,8 @@
   --t-body: clamp(15.5px, 1.05vw, 17px);
   --gut: clamp(20px, 5vw, 76px);
   --ease: cubic-bezier(.2,.75,.12,1);
-  /* chapter colours fade evenly (a fast-start curve made dark-to-light look like a flash) */
-  --pal-ease: cubic-bezier(.4,0,.2,1);
-  transition: --bg 1.2s var(--pal-ease), --fg 1.2s var(--pal-ease), --muted 1.2s var(--pal-ease), --accent 1.2s var(--pal-ease),
-              --aura 1.5s var(--pal-ease), --band 1.2s var(--pal-ease), --card 1.2s var(--pal-ease), --line 1.2s var(--pal-ease);
+  transition: --bg .9s var(--ease), --fg .9s var(--ease), --muted .9s var(--ease), --accent .9s var(--ease),
+              --aura 1.3s var(--ease), --band .9s var(--ease), --card .9s var(--ease), --line .9s var(--ease);
 }
 
 /* chapter palettes (from the landing's scenes) */
@@ -171,10 +153,8 @@ a { color: inherit; }
    Nothing full-screen is fixed: iPhone Safari 26 colours its status bar and toolbar from fixed or sticky layers
    at the screen edges, and the page should show through them instead. */
 .scene::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; height: min(100%, 140vh); pointer-events: none;
-  background: radial-gradient(circle 46vmax at var(--ax, 70%) var(--ay, 40%), var(--aura), transparent); opacity: .55;
-  /* the glow thins out towards its top and bottom, so no straight edge shows where a chapter starts or the glow ends */
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24%, #000 66%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 24%, #000 66%, transparent); }
+  /* the glow fades out before the top and bottom of its box, so no straight edge shows where a chapter starts or the glow ends */
+  background: radial-gradient(46vmax var(--ry, 40%) at var(--ax, 70%) var(--ay, 40%), var(--aura), transparent); opacity: .55; }
 
 /* ---------- dock ---------- */
 .dock { position: fixed; z-index: 30; top: calc(12px + env(safe-area-inset-top, 0px)); left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; visibility: hidden;
@@ -1380,7 +1360,7 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
   const chapNum = d.getElementById('chapNum'), chapName = d.getElementById('chapName'), chap = chapName.parentElement;
   const KEYS = ['bg', 'fg', 'muted', 'accent', 'aura', 'band', 'card', 'line'];
   const AURA = [[74,46],[22,30],[72,40],[28,62],[76,56],[24,34],[62,30],[40,64],[72,44],[30,50],[76,50],[24,40],[66,34],[36,56],[72,40],[50,52]];
-  scenes.forEach((s, i) => { const a = AURA[i % AURA.length]; s.style.setProperty('--ax', a[0] + '%'); s.style.setProperty('--ay', a[1] + '%'); });
+  scenes.forEach((s, i) => { const a = AURA[i % AURA.length]; s.style.setProperty('--ax', a[0] + '%'); s.style.setProperty('--ay', a[1] + '%'); s.style.setProperty('--ry', Math.min(a[1], 100 - a[1]) + '%'); });
 
   /* split headings into words for the scroll-tied reveal */
   const canScrollAnim = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: view()'));
@@ -1478,7 +1458,7 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
   const vids = [...d.querySelectorAll('video')].filter(v => !v.closest('.preloader'));
   const vidIO = new IntersectionObserver(es => es.forEach(e => { e.target._vis = e.isIntersecting; syncVideo(e.target); }), { threshold: 0.2 });
   vids.forEach(v => vidIO.observe(v));
-  if (window.__pre) { window.__pre.resync = syncVideo; window.__pre.onReady(() => vids.forEach(syncVideo)); }
+  if (window.__pre) window.__pre.onReady(() => vids.forEach(syncVideo));
   d.querySelectorAll('.phone').forEach(ph => ph.addEventListener('click', () => {
     const v = ph.querySelector('video.is-on') || ph.querySelector('video:not(.layer)');
     if (!v) return;
