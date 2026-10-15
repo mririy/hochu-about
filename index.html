@@ -117,10 +117,10 @@
   --t-body: clamp(15.5px, 1.05vw, 17px);
   --gut: clamp(20px, 5vw, 76px);
   --ease: cubic-bezier(.2,.75,.12,1);
-  /* chapter colours: a long, soft fade with a gentle start */
-  --pal-ease: cubic-bezier(.4,.1,.25,1);
-  transition: --bg 1.6s var(--pal-ease), --fg 1.6s var(--pal-ease), --muted 1.6s var(--pal-ease), --accent 1.6s var(--pal-ease),
-              --aura 2s var(--pal-ease), --band 1.6s var(--pal-ease), --card 1.6s var(--pal-ease), --line 1.6s var(--pal-ease);
+  /* chapter colours: a long fade that starts moving at once (no pause, no jolt) and settles softly */
+  --pal-ease: cubic-bezier(.25,.46,.45,.94);
+  transition: --bg 1.4s var(--pal-ease), --fg 1.4s var(--pal-ease), --muted 1.4s var(--pal-ease), --accent 1.4s var(--pal-ease),
+              --aura 1.8s var(--pal-ease), --band 1.4s var(--pal-ease), --card 1.4s var(--pal-ease), --line 1.4s var(--pal-ease);
 }
 
 /* chapter palettes (from the landing's scenes) */
@@ -1358,6 +1358,7 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const scenes = [...d.querySelectorAll('main > .scene')];
   const themeMeta = d.querySelector('meta[name="theme-color"]');
+  let themeRaf = 0;
   const bar = d.querySelector('.dock .bar');
   const chapNum = d.getElementById('chapNum'), chapName = d.getElementById('chapName'), chap = chapName.parentElement;
   const KEYS = ['bg', 'fg', 'muted', 'accent', 'aura', 'band', 'card', 'line'];
@@ -1435,7 +1436,17 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
     dots.forEach((b, j) => b.setAttribute('aria-current', j === i ? 'true' : 'false'));
     tocItems.forEach((b, j) => b.setAttribute('aria-current', j === i ? 'true' : 'false'));
     /* browsers that colour their bars from theme-color follow the chapter */
-    if (themeMeta) { const bg = cs.getPropertyValue('--s-bg').trim(); if (bg) themeMeta.setAttribute('content', bg); }
+    /* (the bar colour follows the page's own fade frame by frame instead of jumping to the new colour at once) */
+    if (themeMeta) {
+      const until = performance.now() + 2000;
+      cancelAnimationFrame(themeRaf);
+      const follow = () => {
+        const bg = getComputedStyle(root).getPropertyValue('--bg').trim();
+        if (bg && themeMeta.getAttribute('content') !== bg) themeMeta.setAttribute('content', bg);
+        if (performance.now() < until) themeRaf = requestAnimationFrame(follow);
+      };
+      themeRaf = requestAnimationFrame(follow);
+    }
   };
   const sceneIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setActive(scenes.indexOf(e.target)); }), { rootMargin: '-50% 0px -49% 0px' });
   scenes.forEach(s => sceneIO.observe(s));
