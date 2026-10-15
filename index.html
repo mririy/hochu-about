@@ -117,10 +117,7 @@
   --t-body: clamp(15.5px, 1.05vw, 17px);
   --gut: clamp(20px, 5vw, 76px);
   --ease: cubic-bezier(.2,.75,.12,1);
-  /* chapter colours: a long fade that starts moving at once (no pause, no jolt) and settles softly */
-  --pal-ease: cubic-bezier(.25,.46,.45,.94);
-  transition: --bg 1.4s var(--pal-ease), --fg 1.4s var(--pal-ease), --muted 1.4s var(--pal-ease), --accent 1.4s var(--pal-ease),
-              --aura 1.8s var(--pal-ease), --band 1.4s var(--pal-ease), --card 1.4s var(--pal-ease), --line 1.4s var(--pal-ease);
+  /* chapter colours are blended frame by frame by the script (see fadeTo), not by a CSS transition */
 }
 
 /* chapter palettes (from the landing's scenes) */
@@ -1358,7 +1355,6 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const scenes = [...d.querySelectorAll('main > .scene')];
   const themeMeta = d.querySelector('meta[name="theme-color"]');
-  let themeRaf = 0;
   const bar = d.querySelector('.dock .bar');
   const chapNum = d.getElementById('chapNum'), chapName = d.getElementById('chapName'), chap = chapName.parentElement;
   const KEYS = ['bg', 'fg', 'muted', 'accent', 'aura', 'band', 'card', 'line'];
@@ -1424,29 +1420,56 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
     scenes[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   };
 
+  /* chapter colours: every colour of the page (and the browser bar's theme-color) is blended together, frame by frame.
+     A CSS transition of these inherited colours let some of them jump ahead in Safari, which showed as a click at the start */
+  const parseColor = v => {
+    let m = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (m) { let h = m[1]; if (h.length === 3) h = h.replace(/./g, c => c + c); return [0, 2, 4].map(j => parseInt(h.slice(j, j + 2), 16)).concat(1); }
+    m = v.match(/^rgba?\(([^)]+)\)$/i);
+    if (m) { const p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat); if (p.length >= 3 && p.every(n => !isNaN(n))) return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
+    return null;
+  };
+  const fmt = c => 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + (+c[3].toFixed(3)) + ')';
+  const FADE = 1400, FADE_AURA = 1800, ease = t => 1 - (1 - t) * (1 - t);
+  let pal = null, palRaf = 0;
+  const fadeTo = s => {
+    const cs = getComputedStyle(s), raw = {}, to = {};
+    KEYS.forEach(k => { raw[k] = cs.getPropertyValue('--s-' + k).trim(); to[k] = parseColor(raw[k]); });
+    cancelAnimationFrame(palRaf);
+    const ok = KEYS.every(k => to[k]);
+    if (!pal || reduce || !ok) {
+      KEYS.forEach(k => { if (raw[k]) root.style.setProperty('--' + k, raw[k]); });
+      if (themeMeta && raw.bg) themeMeta.setAttribute('content', raw.bg);
+      pal = ok ? Object.fromEntries(KEYS.map(k => [k, to[k].slice()])) : null;
+      return;
+    }
+    const from = Object.fromEntries(KEYS.map(k => [k, pal[k].slice()])), t0 = performance.now();
+    const step = now => {
+      let done = true;
+      KEYS.forEach(k => {
+        const p = Math.min(1, Math.max(0, now - t0) / (k === 'aura' ? FADE_AURA : FADE));
+        if (p < 1) done = false;
+        const e = ease(p);
+        pal[k] = from[k].map((a, j) => a + (to[k][j] - a) * e);
+        root.style.setProperty('--' + k, fmt(pal[k]));
+      });
+      if (themeMeta) themeMeta.setAttribute('content', fmt(pal.bg));
+      if (!done) palRaf = requestAnimationFrame(step);
+    };
+    palRaf = requestAnimationFrame(step);
+  };
+
   /* palette + chapter label follow the chapter crossing the middle of the screen */
   const setActive = i => {
     if (i < 0 || i === active) return;
     active = i;
-    const s = scenes[i], cs = getComputedStyle(s);
-    KEYS.forEach(k => { const v = cs.getPropertyValue('--s-' + k).trim(); if (v) root.style.setProperty('--' + k, v); });
+    const s = scenes[i];
+    fadeTo(s);
     chapNum.textContent = s.dataset.num || '';
     chapName.textContent = s.dataset.short || s.dataset.title || '';
     if (!reduce) { chap.classList.remove('swap'); void chap.offsetWidth; chap.classList.add('swap'); }
     dots.forEach((b, j) => b.setAttribute('aria-current', j === i ? 'true' : 'false'));
     tocItems.forEach((b, j) => b.setAttribute('aria-current', j === i ? 'true' : 'false'));
-    /* browsers that colour their bars from theme-color follow the chapter */
-    /* (the bar colour follows the page's own fade frame by frame instead of jumping to the new colour at once) */
-    if (themeMeta) {
-      const until = performance.now() + 2000;
-      cancelAnimationFrame(themeRaf);
-      const follow = () => {
-        const bg = getComputedStyle(root).getPropertyValue('--bg').trim();
-        if (bg && themeMeta.getAttribute('content') !== bg) themeMeta.setAttribute('content', bg);
-        if (performance.now() < until) themeRaf = requestAnimationFrame(follow);
-      };
-      themeRaf = requestAnimationFrame(follow);
-    }
   };
   const sceneIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setActive(scenes.indexOf(e.target)); }), { rootMargin: '-50% 0px -49% 0px' });
   scenes.forEach(s => sceneIO.observe(s));
