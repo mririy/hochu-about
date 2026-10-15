@@ -326,7 +326,7 @@ html.js .src.is-in { opacity: 1; transform: none; }
 html.js .night[data-active="3"] .src.is-in { opacity: .3; filter: blur(2px) grayscale(.6); transform: translateY(10px) scale(.96); }
 .nsteps { display: flex; flex-direction: column; }
 .nstep { min-height: 54vh; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
-html.js .nstep { opacity: .3; transition: opacity .6s var(--ease); }
+html.js .nstep { opacity: .3; transition: opacity 1s cubic-bezier(.25,.46,.45,.94); } /* the highlight passes softly from line to line */
 html.js .nstep.is-on { opacity: 1; }
 .ntime { font-weight: 800; font-size: 15px; letter-spacing: .08em; font-variant-numeric: tabular-nums; color: var(--accent); }
 .nline { font-size: clamp(30px, 3.3vw, 52px); font-weight: 800; letter-spacing: -.045em; line-height: 1.04; text-wrap: balance; }
