@@ -207,7 +207,7 @@ a { color: inherit; }
 .screen .layer.is-on, html:not(.js) .screen .layer:first-child { opacity: 1; }
 .halo { position: absolute; left: 50%; top: 50%; width: 230%; height: 120%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, var(--aura), transparent); opacity: .7; z-index: -1; pointer-events: none; }
 .tilt { perspective: 1400px; }
-@media (hover: hover) and (pointer: fine) { .tilt .phone { transform: rotateY(calc(var(--tx, 0) * 12deg)) rotateX(calc(var(--ty, 0) * -9deg)); transition: transform .5s var(--ease); } }
+.tilt .phone { transform: rotateY(calc(var(--tx, 0) * 12deg)) rotateX(calc(var(--ty, 0) * -9deg)); transition: transform .5s var(--ease); }
 
 /* ---------- 00 · hero ---------- */
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); align-items: center; gap: clamp(24px, 4vw, 64px); padding-block: clamp(100px, 15vh, 160px) clamp(64px, 10vh, 110px); }
@@ -256,7 +256,7 @@ html:not(.js) .eq { --b: 1; --c: 1; --cs: 1; }
 .clock { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .clock-time { font-size: clamp(88px, 12.5vw, 200px); font-weight: 800; letter-spacing: -.065em; line-height: .86; font-variant-numeric: tabular-nums; color: var(--fg); text-shadow: 0 0 60px rgba(215,170,255,.25); }
 .clock-time.tick { animation: tick .55s var(--ease); }
-@keyframes tick { from { opacity: 0; transform: translateY(.12em); } to { opacity: 1; transform: none; } }
+@keyframes tick { from { opacity: 0; transform: translateY(.12em); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
 .clock small { font-size: clamp(16px, 1.5vw, 22px); font-weight: 600; color: var(--muted); padding-left: .2em; }
 .src { position: absolute; width: clamp(140px, 13vw, 190px); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
   box-shadow: 0 24px 50px rgba(0,0,0,.4); rotate: var(--r, 0deg); transition: opacity .7s var(--ease), transform .7s var(--ease), filter .7s; }
@@ -318,6 +318,7 @@ html.js .nstep.is-on { opacity: 1; }
 .roulette { position: relative; justify-self: center; width: clamp(240px, 24vw, 320px); }
 .rl-frame { position: relative; overflow: hidden; border-radius: 30px; aspect-ratio: 9 / 14; background: #1b1530; rotate: 3deg;
   box-shadow: 0 0 0 7px #fff, 0 40px 80px rgba(53,45,73,.3); isolation: isolate; }
+.rl-strip { will-change: transform; }
 .rl { position: relative; aspect-ratio: 9 / 14; display: grid; place-items: center; padding: 22px; text-align: center; overflow: hidden; background: var(--g); color: #fff; }
 .rl b { font-size: clamp(30px, 2.8vw, 42px); font-weight: 800; letter-spacing: -.045em; line-height: 1; text-wrap: balance; }
 .rl.c1 { --g: var(--g-yellow); color: #5e4a12; } .rl.c2 { --g: var(--g-coral); } .rl.c3 { --g: var(--g-cyan); }
@@ -715,20 +716,15 @@ html.js .nstep.is-on { opacity: 1; }
 @keyframes phoneIn { from { opacity: 0; transform: translateY(70px) scale(.94); } to { opacity: 1; transform: none; } }
 @keyframes pop { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
 
-/* scroll-told reveals: tied to the scroll position, so nothing rebuilds itself after scrolling stops.
-   They run only for blocks within about a screen of the viewport (the script marks them .near);
-   further away everything rests in its final look, so a phone keeps no pile of animated layers. */
+/* scroll-told reveals: only where the browser ties animation to scrolling; otherwise everything simply stands still */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    [data-split] .w { display: inline-block; }
-    [data-split].near .w { animation: wIn linear both; animation-timeline: view(); animation-range: entry 0% cover 26%; }
-    .fill[data-split].near .w { animation-name: wFill; animation-range: cover 16% cover 40%; }
-    .rv.near { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 22%; }
-    .reel.near { animation: storyIn linear both; animation-timeline: view(); animation-range: entry 0% cover 30%; }
-    :is(.win-pop, .tk-pop).near { animation: popIn linear both; animation-timeline: view(); animation-range: entry 40% cover 45%; }
-    .bubble.near { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 24%; }
-    .fx.near .fx-fly { animation: fxIn linear both, fxOut linear both; animation-timeline: view(), view(); animation-range: entry 0% cover 40%, exit 30% exit 100%; }
-    .fx.near .fx-tx { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 28%; }
+    [data-split] .w { display: inline-block; animation: wIn linear both; animation-timeline: view(); animation-range: entry 0% cover 26%; }
+    .fill[data-split] .w { animation-name: wFill; animation-range: cover 16% cover 40%; }
+    .rv { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 22%; }
+    .reel { animation: storyIn linear both; animation-timeline: view(); animation-range: entry 0% cover 30%; }
+    .win-pop, .tk-pop { animation: popIn linear both; animation-timeline: view(); animation-range: entry 40% cover 45%; }
+    .bubble { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 24%; }
   }
 }
 @keyframes wIn { from { opacity: 0; transform: translateY(.5em); } to { opacity: 1; transform: none; } }
@@ -736,9 +732,13 @@ html.js .nstep.is-on { opacity: 1; }
 @keyframes rvIn { from { opacity: 0; transform: translateY(56px); } to { opacity: 1; transform: none; } }
 @keyframes popIn { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
 @keyframes storyIn { from { opacity: 0; transform: translateY(80px) rotate(-8deg); } to { opacity: 1; transform: none; } }
-@keyframes fxIn { from { opacity: 0; translate: var(--fx-x) 170px; rotate: var(--fx-r0); scale: .76; } to { opacity: 1; translate: 0 0; rotate: var(--fx-r1); scale: 1; } }
-@keyframes fxOut { to { transform: translateY(-90px) rotate(var(--fx-ro)) scale(.9); } }
-/* where scrolling cannot drive animation, each feature phone flies in once as it shows up */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .fx-fly { animation: fxIn linear both, fxOut linear both; animation-timeline: view(), view(); animation-range: entry 0% cover 40%, exit 30% exit 100%; }
+    .fx-tx { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 28%; }
+  }
+}
 @supports not (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     html.js .fx-fly { opacity: 0; translate: var(--fx-x) 140px; rotate: var(--fx-r0); scale: .8; transition: opacity .7s var(--ease), translate 1.2s var(--ease), rotate 1.2s var(--ease), scale 1.2s var(--ease); }
@@ -747,10 +747,8 @@ html.js .nstep.is-on { opacity: 1; }
     html.js .fx.is-in .fx-tx { opacity: 1; translate: 0 0; }
   }
 }
-/* chapters far from the screen rest: looping motion stops until the chapter comes near again */
-html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: none; }
-/* while chapters flick past quickly the colours switch at once instead of animating every frame */
-:root.pal-instant { transition: none; }
+@keyframes fxIn { from { opacity: 0; translate: var(--fx-x) 170px; rotate: var(--fx-r0); scale: .76; } to { opacity: 1; translate: 0 0; rotate: var(--fx-r1); scale: 1; } }
+@keyframes fxOut { to { transform: translateY(-90px) rotate(var(--fx-ro)) scale(.9); } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -1166,42 +1164,42 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
     <div class="fxs">
       <article class="fx">
         <div class="fx-fly">
-          <div class="halo"></div><div class="fx-lev"><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/home.mp4" poster="assets/home.webp" muted playsinline loop preload="none" aria-label="Лента и рекомендации"></video></div></div></div>
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/home.mp4" poster="assets/home.webp" muted playsinline loop preload="none" aria-label="Лента и рекомендации"></video></div></div></div>
           <img class="fx-ic lev" style="--dur:5.6s;--del:-1s" src="assets/heart.webp" width="640" height="640" alt="" loading="lazy">
         </div>
         <div class="fx-tx"><p class="fx-n">01</p><h3>Лента и рекомендации</h3><p class="fx-d">Что интересного вокруг</p></div>
       </article>
       <article class="fx">
         <div class="fx-fly">
-          <div class="halo"></div><div class="fx-lev"><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/search.mp4" poster="assets/search.webp" muted playsinline loop preload="none" aria-label="Список и карта"></video></div></div></div>
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/search.mp4" poster="assets/search.webp" muted playsinline loop preload="none" aria-label="Список и карта"></video></div></div></div>
           <img class="fx-ic lev" style="--dur:6.4s;--del:-3s" src="assets/map.webp" width="640" height="480" alt="" loading="lazy">
         </div>
         <div class="fx-tx"><p class="fx-n">02</p><h3>Список и карта</h3><p class="fx-d">Всё, что рядом, с фильтрами</p></div>
       </article>
       <article class="fx">
         <div class="fx-fly">
-          <div class="halo"></div><div class="fx-lev"><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/neuro.mp4" poster="assets/neuro.webp" muted playsinline loop preload="none" aria-label="Нейроподборка"></video></div></div></div>
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/neuro.mp4" poster="assets/neuro.webp" muted playsinline loop preload="none" aria-label="Нейроподборка"></video></div></div></div>
           <img class="fx-ic lev" style="--dur:5.2s;--del:-2s" src="assets/spark.webp" width="640" height="640" alt="" loading="lazy">
         </div>
         <div class="fx-tx"><p class="fx-n">03</p><h3>Нейроподборка</h3><p class="fx-d">Подбирает события под настроение и повод</p></div>
       </article>
       <article class="fx">
         <div class="fx-fly">
-          <div class="halo"></div><div class="fx-lev"><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/tickets.mp4" poster="assets/tickets.webp" muted playsinline loop preload="none" aria-label="Билеты"></video></div></div></div>
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/tickets.mp4" poster="assets/tickets.webp" muted playsinline loop preload="none" aria-label="Билеты"></video></div></div></div>
           <i class="fx-ic fx-tk lev" style="--dur:6s;--del:-1.5s"></i>
         </div>
         <div class="fx-tx"><p class="fx-n">04</p><h3>Билеты</h3><p class="fx-d">На привычной афише или прямо в ХОЧУ</p></div>
       </article>
       <article class="fx">
         <div class="fx-fly">
-          <div class="halo"></div><div class="fx-lev"><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/chats.mp4" poster="assets/chats.webp" muted playsinline loop preload="none" aria-label="Чаты"></video></div></div></div>
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/chats.mp4" poster="assets/chats.webp" muted playsinline loop preload="none" aria-label="Чаты"></video></div></div></div>
           <span class="fx-ic fx-bub lev" style="--dur:5.8s;--del:-4s"><svg class="i"><use href="#i-chat"/></svg></span>
         </div>
         <div class="fx-tx"><p class="fx-n">05</p><h3>Чаты</h3><p class="fx-d">Позвать своих и договориться</p></div>
       </article>
       <article class="fx">
         <div class="fx-fly">
-          <div class="halo"></div><div class="fx-lev"><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/posts.mp4" poster="assets/posts.webp" muted playsinline loop preload="none" aria-label="Посты и события"></video></div></div></div>
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/posts.mp4" poster="assets/posts.webp" muted playsinline loop preload="none" aria-label="Посты и события"></video></div></div></div>
           <img class="fx-ic lev" style="--dur:6.6s;--del:-2.5s" src="assets/camera.webp" width="640" height="480" alt="" loading="lazy">
         </div>
         <div class="fx-tx"><p class="fx-n">06</p><h3>Посты и события</h3><p class="fx-d">От блогеров и организаторов</p></div>
@@ -1352,7 +1350,7 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
   d.addEventListener('click', e => { if (!toc.hidden && !toc.contains(e.target)) closeToc(); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && !toc.hidden) { closeToc(); tocBtn.focus(); } });
 
-  let active = -1, lastSwitch = -1e9, calmT = 0;
+  let active = -1;
   const go = i => {
     i = Math.max(0, Math.min(scenes.length - 1, i));
     scenes[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
@@ -1362,9 +1360,6 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
   const setActive = i => {
     if (i < 0 || i === active) return;
     active = i;
-    const now = performance.now();
-    if (now - lastSwitch < 900) { root.classList.add('pal-instant'); clearTimeout(calmT); calmT = setTimeout(() => root.classList.remove('pal-instant'), 900); }
-    lastSwitch = now;
     const s = scenes[i], cs = getComputedStyle(s);
     KEYS.forEach(k => { const v = cs.getPropertyValue('--s-' + k).trim(); if (v) root.style.setProperty('--' + k, v); });
     chapNum.textContent = s.dataset.num || '';
@@ -1379,22 +1374,6 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
   scenes.forEach(s => sceneIO.observe(s));
   setActive(0);
 
-  /* scroll-tied reveals are switched on only near the screen (about a screen above and below);
-     the first pass is synchronous so nothing flickers on load */
-  if (canScrollAnim && !reduce) {
-    const nearEls = [...d.querySelectorAll('[data-split], .rv, .bubble, .reel, .win-pop, .tk-pop, .fx')];
-    const vh0 = innerHeight;
-    nearEls.forEach(el => { const r = el.getBoundingClientRect(); if (r.bottom > -vh0 && r.top < vh0 * 2) el.classList.add('near'); });
-    const nearElIO = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('near', e.isIntersecting)), { rootMargin: '100% 0px' });
-    nearEls.forEach(el => nearElIO.observe(el));
-  }
-  /* intro animations let go once they finish, so nothing stays on its own layer */
-  d.querySelectorAll('.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .hero .phone-wrap, .pop, .cue').forEach(el =>
-    el.addEventListener('animationend', e => { if (e.target === el) el.style.animation = 'none'; }));
-  /* chapters far from the screen rest */
-  const nearIO = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('idle', !e.isIntersecting)), { rootMargin: '60% 0px' });
-  scenes.forEach(s => nearIO.observe(s));
-
   addEventListener('keydown', e => {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     const t = e.target;
@@ -1403,40 +1382,21 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
     else if (e.key === 'ArrowLeft') { e.preventDefault(); go(active - 1); }
   });
 
-  /* videos: once scrolling settles, only the most visible one plays; far-off ones let go of their memory */
-  const vids = [...d.querySelectorAll('video')];
-  vids.forEach(v => { v.dataset.src = v.getAttribute('src') || ''; v._ratio = 0; });
-  const eligible = v => !(v.classList.contains('layer') && !v.classList.contains('is-on')) && !v._held && (!reduce || v._asked);
-  const vScore = v => v._ratio + (v._asked ? 2 : 0);
-  const pickVideo = () => {
-    let best = null;
-    for (const v of vids) {
-      if (!eligible(v) || !(v._ratio >= .5 || (v._asked && v._ratio > .15))) continue;
-      if (!best || vScore(v) > vScore(best)) best = v;
-    }
-    for (const v of vids) {
-      if (v === best) {
-        if (!v.getAttribute('src') && v.dataset.src) v.setAttribute('src', v.dataset.src);
-        if (v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
-      } else if (!v.paused) v.pause();
-    }
+  /* videos: play only what is on screen, one at a time */
+  const syncVideo = v => {
+    const off = v.classList.contains('layer') && !v.classList.contains('is-on');
+    const want = v._vis && !off && !v._held && (!reduce || v._asked);
+    if (want) { if (v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } }
+    else if (!v.paused) v.pause();
   };
-  let vidT = 0;
-  const syncVideo = () => { clearTimeout(vidT); vidT = setTimeout(pickVideo, 300); };
-  const vidIO = new IntersectionObserver(es => {
-    es.forEach(e => { const v = e.target; v._ratio = e.isIntersecting ? e.intersectionRatio : 0; if (!e.isIntersecting) v._asked = false; });
-    syncVideo();
-  }, { threshold: [0, .25, .5, .75, 1] });
-  const farIO = new IntersectionObserver(es => es.forEach(e => {
-    const v = e.target;
-    if (!e.isIntersecting && v.getAttribute('src')) { v.pause(); v.removeAttribute('src'); v.load(); }
-  }), { rootMargin: '100% 0px' });
-  vids.forEach(v => { vidIO.observe(v); farIO.observe(v); });
+  const vids = [...d.querySelectorAll('video')];
+  const vidIO = new IntersectionObserver(es => es.forEach(e => { e.target._vis = e.isIntersecting; syncVideo(e.target); }), { threshold: 0.2 });
+  vids.forEach(v => vidIO.observe(v));
   d.querySelectorAll('.phone').forEach(ph => ph.addEventListener('click', () => {
     const v = ph.querySelector('video.is-on') || ph.querySelector('video:not(.layer)');
     if (!v) return;
-    if (v.paused) { v._held = false; v._asked = true; } else { v._held = true; v._asked = false; }
-    clearTimeout(vidT); pickVideo();
+    if (v.paused) { v._held = false; v._asked = true; } else { v._held = true; }
+    syncVideo(v);
   }));
 
   /* scroll-told sequences: steps switch the phone screen, the clock and the pile of tabs */
@@ -1507,12 +1467,8 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
     const vh = innerHeight;
     for (const el of builds) {
       const r = el.getBoundingClientRect(), mid = r.top + r.height / 2;
-      if (r.bottom < -vh * .5 || r.top > vh * 1.5) continue;
       const p = reduce ? 1 : clamp01((vh * 0.95 - mid) / (vh * 0.42));
       const bv = clamp01((p - .06) / .34), cv = clamp01((p - .48) / .34);
-      const k = bv.toFixed(3) + '/' + cv.toFixed(3);
-      if (el._k === k) continue;
-      el._k = k;
       el.style.setProperty('--b', bv.toFixed(4));
       el.style.setProperty('--c', cv.toFixed(4));
       el.style.setProperty('--cs', (cv === 0 ? 0 : backOut(cv)).toFixed(4));
