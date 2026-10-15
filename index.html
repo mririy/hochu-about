@@ -99,14 +99,14 @@
 <style>
 /* Layout: one full-bleed colour stage that morphs chapter by chapter (palettes of the ХОЧУ landing).
    Every chapter carries one idea: a big line, one picture, little text. Phones get a single column. */
-@property --bg     { syntax: "<color>"; inherits: true; initial-value: #079fee; }
-@property --fg     { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
-@property --muted  { syntax: "<color>"; inherits: true; initial-value: #e3f5ff; }
-@property --accent { syntax: "<color>"; inherits: true; initial-value: #c6f1ff; }
-@property --aura   { syntax: "<color>"; inherits: true; initial-value: #a0e9ff; }
-@property --band   { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.16); }
-@property --card   { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.14); }
-@property --line   { syntax: "<color>"; inherits: true; initial-value: rgba(255,255,255,.32); }
+@property --bg     { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --fg     { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --muted  { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --accent { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --aura   { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --band   { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --card   { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --line   { syntax: "<color>"; inherits: true; initial-value: transparent; }
 
 :root {
   /* stage colours (switched per chapter) */
@@ -171,7 +171,10 @@ a { color: inherit; }
    Nothing full-screen is fixed: iPhone Safari 26 colours its status bar and toolbar from fixed or sticky layers
    at the screen edges, and the page should show through them instead. */
 .scene::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; height: min(100%, 140vh); pointer-events: none;
-  background: radial-gradient(circle 46vmax at var(--ax, 70%) var(--ay, 40%), var(--aura), transparent); opacity: .55; }
+  background: radial-gradient(circle 46vmax at var(--ax, 70%) var(--ay, 40%), var(--aura), transparent); opacity: .55;
+  /* the glow thins out towards its top and bottom, so no straight edge shows where a chapter starts or the glow ends */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24%, #000 66%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 24%, #000 66%, transparent); }
 
 /* ---------- dock ---------- */
 .dock { position: fixed; z-index: 30; top: calc(12px + env(safe-area-inset-top, 0px)); left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; visibility: hidden;
