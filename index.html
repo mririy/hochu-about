@@ -809,6 +809,9 @@ html.js .nstep.is-on { opacity: 1; }
   .lev, .cue .i, .beat, .fx-lev { animation: none; }
   .tilt .phone { transform: none; }
 }
+/* ---------- captions under headings: a touch heavier and tighter, so they sit cleanly next to the bold headings ---------- */
+:is(.lead, .eq-tx small, .moment-sub, .sd-s, .fd-s, .fx-d, .val-sub, .alt-t small, .mv-sub, .ch-note) { font-weight: 500; letter-spacing: -.015em;
+  color: color-mix(in srgb, var(--muted) 78%, var(--fg)); }
 /* ---------- preloader: the logo jumps while the whole page loads (only with script; without it the page shows at once) ---------- */
 .preloader { display: none; }
 html.is-loading .preloader, html.is-loaded .preloader { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #fff;
