@@ -326,7 +326,7 @@ html.js .src.is-in { opacity: 1; transform: none; }
 html.js .night[data-active="3"] .src.is-in { opacity: .3; filter: blur(2px) grayscale(.6); transform: translateY(10px) scale(.96); }
 .nsteps { display: flex; flex-direction: column; }
 .nstep { min-height: 54vh; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
-html.js .nstep { opacity: .3; transition: opacity 1s cubic-bezier(.25,.46,.45,.94); } /* the highlight passes softly from line to line */
+html.js .nstep { opacity: .3; } /* the highlight passes softly from line to line (animated by the script, see set()) */
 html.js .nstep.is-on { opacity: 1; }
 .ntime { font-weight: 800; font-size: 15px; letter-spacing: .08em; font-variant-numeric: tabular-nums; color: var(--accent); }
 .nline { font-size: clamp(30px, 3.3vw, 52px); font-weight: 800; letter-spacing: -.045em; line-height: 1.04; text-wrap: balance; }
@@ -1517,7 +1517,16 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
       if (n === cur) return;
       cur = n;
       seq.dataset.active = n;
-      steps.forEach(s => s.classList.toggle('is-on', +s.dataset.step === n));
+      steps.forEach(s => {
+        const on = +s.dataset.step === n;
+        if (!s.classList.contains('nstep') || reduce || !s.animate) { s.classList.toggle('is-on', on); return; }
+        /* the fade starts from wherever the line is right now, so a quick scroll back and forth never snaps */
+        const from = getComputedStyle(s).opacity;
+        if (s._fade) s._fade.cancel();
+        s.classList.toggle('is-on', on);
+        const to = getComputedStyle(s).opacity;
+        if (from !== to) s._fade = s.animate([{ opacity: from }, { opacity: to }], { duration: 1000, easing: 'cubic-bezier(.25,.46,.45,.94)' });
+      });
       layers.forEach(l => {
         const on = +l.dataset.layer === n;
         const was = l.classList.contains('is-on');
