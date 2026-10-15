@@ -77,7 +77,14 @@
         byUrl.get(u).push(v);
       });
       byUrl.forEach((list, u) => waits.push(fetch(u).then(r => r.ok ? r.blob() : null).then(b => {
-        if (b && !lifted) { const url = URL.createObjectURL(b); list.forEach(v => { v.src = url; }); }
+        if (b && !lifted) {
+          const url = URL.createObjectURL(b);
+          /* a phone that will not play from memory goes back to the file itself */
+          list.forEach(v => {
+            v.addEventListener('error', () => { if (v.getAttribute('src') === url) { v.src = u; if (pre.resync) pre.resync(v); } }, { once: true });
+            v.src = url;
+          });
+        }
       }).catch(() => {})));
       if (document.fonts && document.fonts.ready) waits.push(document.fonts.ready.catch(() => {}));
       waits.push(new Promise(r => { if (document.readyState === 'complete') r(); else addEventListener('load', r, { once: true }); }));
@@ -1466,7 +1473,7 @@ html.is-loading :is(.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .h
   const vids = [...d.querySelectorAll('video')].filter(v => !v.closest('.preloader'));
   const vidIO = new IntersectionObserver(es => es.forEach(e => { e.target._vis = e.isIntersecting; syncVideo(e.target); }), { threshold: 0.2 });
   vids.forEach(v => vidIO.observe(v));
-  if (window.__pre) window.__pre.onReady(() => vids.forEach(syncVideo));
+  if (window.__pre) { window.__pre.resync = syncVideo; window.__pre.onReady(() => vids.forEach(syncVideo)); }
   d.querySelectorAll('.phone').forEach(ph => ph.addEventListener('click', () => {
     const v = ph.querySelector('video.is-on') || ph.querySelector('video:not(.layer)');
     if (!v) return;
