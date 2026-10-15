@@ -133,8 +133,10 @@
   --t-body: clamp(15.5px, 1.05vw, 17px);
   --gut: clamp(20px, 5vw, 76px);
   --ease: cubic-bezier(.2,.75,.12,1);
-  transition: --bg .9s var(--ease), --fg .9s var(--ease), --muted .9s var(--ease), --accent .9s var(--ease),
-              --aura 1.3s var(--ease), --band .9s var(--ease), --card .9s var(--ease), --line .9s var(--ease);
+  /* chapter colours fade evenly (a fast-start curve made dark-to-light look like a flash) */
+  --pal-ease: cubic-bezier(.4,0,.2,1);
+  transition: --bg 1.2s var(--pal-ease), --fg 1.2s var(--pal-ease), --muted 1.2s var(--pal-ease), --accent 1.2s var(--pal-ease),
+              --aura 1.5s var(--pal-ease), --band 1.2s var(--pal-ease), --card 1.2s var(--pal-ease), --line 1.2s var(--pal-ease);
 }
 
 /* chapter palettes (from the landing's scenes) */
