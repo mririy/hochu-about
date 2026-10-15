@@ -81,8 +81,9 @@ html:not(.js) .scene { --bg: var(--s-bg); --fg: var(--s-fg); --muted: var(--s-mu
 
 /* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; overflow-x: clip; background: var(--bg); }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 400 var(--t-body)/1.5 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: clip; -webkit-text-size-adjust: 100%; }
+html { scroll-behavior: smooth; overflow-x: clip; background-color: var(--bg);
+  background-image: repeating-linear-gradient(157deg, var(--band) 0 16vh, transparent calc(16vh + 1px) 58vh, var(--band) calc(58vh + 1px) 70vh, transparent calc(70vh + 1px) calc(124vh - 1px), var(--band) 124vh); }
+body { margin: 0; color: var(--fg); font: 400 var(--t-body)/1.5 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: clip; -webkit-text-size-adjust: 100%; }
 h1, h2, h3, p, ol, ul, dl, dd, figure, blockquote { margin: 0; }
 ol, ul { padding: 0; list-style: none; }
 img, video { display: block; max-width: 100%; height: auto; }
@@ -93,23 +94,17 @@ a { color: inherit; }
 .ph { background: var(--ph-bg); outline: 1.5px dashed var(--ph-line); outline-offset: 1px; border-radius: 6px; padding: 0 .18em; }
 .nowrap { white-space: nowrap; }
 
-/* ---------- stage: colour field, aura, diagonal light bands ---------- */
-.stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-/* iPhone Safari 26 paints its status-bar and toolbar areas with the colour of a fixed or sticky layer touching the screen edge.
-   Hidden, click-through containers are skipped, so the page itself shows through the bars; their contents stay visible. */
-.stage, .dock, .idea-pin, .split-phone { visibility: hidden; pointer-events: none; }
-.stage > *, .dock > *, .idea-pin > *, .split-phone > * { visibility: visible; }
-.split-phone .phone { pointer-events: auto; }
-.aura { position: absolute; left: 0; top: 0; width: 95vmax; height: 95vmax; border-radius: 50%; background: radial-gradient(closest-side, var(--aura), transparent); opacity: .55;
-  transform: translate(calc(var(--ax, 70) * 1vw - 50%), calc(var(--ay, 45) * 1vh - 50%)); transition: transform 1.6s var(--ease); }
-.bands i { position: absolute; left: -30vw; width: 160vw; height: clamp(90px, 14vh, 170px); background: var(--band); transform: translateY(var(--y, 0px)) rotate(-23deg); transition: transform 1.8s var(--ease); }
-.bands i:nth-child(1) { top: -12vh; height: clamp(110px, 18vh, 210px); --y: var(--b1, 0vh); }
-.bands i:nth-child(2) { top: 52vh; --y: var(--b2, 0vh); }
-.bands i:nth-child(3) { top: 112vh; height: clamp(130px, 21vh, 240px); --y: var(--b3, 0vh); }
+/* ---------- backdrop ----------
+   Diagonal light bands are painted on the page background and every chapter carries its own soft glow.
+   Nothing full-screen is fixed: iPhone Safari 26 colours its status bar and toolbar from fixed or sticky layers
+   at the screen edges, and the page should show through them instead. */
+.scene::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; height: min(100%, 140vh); pointer-events: none;
+  background: radial-gradient(circle 46vmax at var(--ax, 70%) var(--ay, 40%), var(--aura), transparent); opacity: .55; }
 
 /* ---------- dock ---------- */
-.dock { position: fixed; z-index: 30; top: 0; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none;
-  padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+.dock { position: fixed; z-index: 30; top: calc(12px + env(safe-area-inset-top, 0px)); left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; visibility: hidden;
+  padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+.dock > * { visibility: visible; }
 .dock-in { position: relative; pointer-events: auto; display: flex; align-items: center; gap: clamp(10px, 1.6vw, 22px); max-width: 100%; padding: 5px 5px 5px 7px; border-radius: 999px; overflow: hidden;
   background: rgba(255,255,255,.86); color: var(--ink); -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
   box-shadow: 0 10px 30px rgba(16,38,66,.13), inset 0 0 0 1px rgba(255,255,255,.75); }
@@ -235,9 +230,6 @@ a { color: inherit; }
 
 /* ---------- 03 · idea: афиша + соцсеть = ХОЧУ ---------- */
 .idea-grid .h2 { font-size: clamp(40px, calc(3.6vw + 18px), 74px); }
-.idea-scene { display: block; }
-.idea-track { position: relative; height: 220vh; height: 220svh; }
-.idea-pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; }
 .idea-grid { display: flex; flex-direction: column; gap: clamp(36px, 7vh, 72px); }
 /* Афиша + Соцсеть = ХОЧУ, built step by step while the chapter is pinned */
 .eq { --b: 0; --c: 0; --cs: 0; display: flex; align-items: flex-start; justify-content: center; gap: clamp(8px, 1.6vw, 24px); width: 100%; }
@@ -255,8 +247,6 @@ a { color: inherit; }
 .eq-it.c .eq-ic::before { content: ""; position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(closest-side, rgba(125,139,255,.45), rgba(125,139,255,0)); z-index: -1; }
 .eq-it.c .eq-ic img { filter: drop-shadow(0 22px 36px rgba(110,120,255,.4)); }
 .eq-it.c .eq-tx b { font-size: clamp(28px, 2.6vw, 40px); }
-html:not(.js) .idea-track { height: auto; }
-html:not(.js) .idea-pin { position: static; height: auto; }
 html:not(.js) .eq { --b: 1; --c: 1; --cs: 1; }
 
 /* ---------- 01 · problem ---------- */
@@ -415,7 +405,7 @@ html.js .nstep.is-on { opacity: 1; }
 .scen::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(170deg, rgba(8,30,70,.12), rgba(8,22,60,.62)); }
 .scen .pill { align-self: flex-start; font-size: 16px; rotate: -4deg; }
 .scen .pill:nth-of-type(even) { align-self: flex-end; rotate: 3deg; }
-.scen .pill.is-on { box-shadow: inset 0 0 0 1.2px rgba(255,255,255,.38), 0 5px 0 var(--edge), 0 0 0 4px #fff, 0 18px 30px rgba(0,0,0,.3); }
+.scen .pill.is-on { scale: 1.07; box-shadow: inset 0 0 0 1.2px rgba(255,255,255,.38), 0 5px 0 var(--edge), 0 20px 34px rgba(0,0,0,.34); }
 /* then: where you pay */
 .routes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vw, 96px); width: 100%; max-width: 1040px; }
 .rc { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
@@ -474,26 +464,29 @@ html.js .nstep.is-on { opacity: 1; }
 .to-chat { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; color: var(--brand-deep); font-size: 12px; font-weight: 800; }
 .to-chat .i { width: 13px; height: 13px; }
 
-/* ---------- 10 · features: scroll-told phone ---------- */
-.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .82fr); gap: clamp(24px, 5vw, 80px); }
-.split-steps { display: flex; flex-direction: column; }
-.split-phone { position: relative; }
-.sticky-phone { --pw: min(290px, calc(70vh * .43)); position: sticky; top: calc(50vh - var(--pw) * 1.05); display: grid; justify-items: center; }
-.sticky-phone .phone { --pw: inherit; }
-html.js .feat { opacity: .3; transition: opacity .5s var(--ease); }
-html.js .feat.is-on { opacity: 1; }
-.feat { min-height: 46vh; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
-.feat h3 { display: flex; align-items: center; gap: 14px; font-size: clamp(28px, 3vw, 46px); font-weight: 800; letter-spacing: -.045em; line-height: 1; }
-.feat h3 .n { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--fg); color: var(--bg); font-size: 16px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
-.feat p { font-size: clamp(17px, 1.4vw, 22px); color: var(--muted); max-width: 26em; line-height: 1.4; }
-.feat-cap { display: none; flex-direction: column; align-items: center; gap: 6px; padding-top: 18px; min-height: 104px; text-align: center; }
-.fc-t { font-size: clamp(24px, 6.6vw, 30px); font-weight: 800; letter-spacing: -.04em; line-height: 1.05; }
-.fc-d { font-size: 16px; color: var(--muted); }
-.fc-dots { display: flex; gap: 6px; padding-top: 6px; }
-.fc-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--fg); opacity: .22; transition: width .35s var(--ease), opacity .35s; }
-.fc-dots i.on { width: 20px; opacity: 1; }
-.feat-cap.swap .fc-t, .feat-cap.swap .fc-d { animation: capIn .45s var(--ease); }
-@keyframes capIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* ---------- 10 · features: each phone flies in on its own and floats ---------- */
+.fxs { display: flex; flex-direction: column; gap: clamp(64px, 10vh, 120px); }
+.fx { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(28px, 5vw, 90px); }
+.fx:nth-child(odd)  { --fx-x: -90px; --fx-r0: -18deg; --fx-r1: -3deg; --fx-ro: -7deg; }
+.fx:nth-child(even) { --fx-x: 90px;  --fx-r0: 18deg;  --fx-r1: 3deg;  --fx-ro: 7deg; }
+.fx:nth-child(even) .fx-fly { order: 2; }
+.fx-fly { position: relative; justify-self: center; rotate: var(--fx-r1); }
+.fx-lev { position: relative; animation: lev 6.4s ease-in-out infinite; }
+.fx:nth-child(even) .fx-lev { animation-delay: -3.2s; }
+.fx .phone { --pw: clamp(210px, 17vw, 250px); }
+.fx-ic { position: absolute; z-index: 2; top: 7%; right: -30%; width: 46%; height: auto; pointer-events: none; filter: drop-shadow(0 18px 26px rgba(36,51,71,.2)); }
+.fx:nth-child(even) .fx-ic { right: auto; left: -30%; }
+.fx-tk { display: block; width: 40%; aspect-ratio: 1.45; border-radius: 16px; rotate: -12deg; background: var(--g-lime); filter: none;
+  box-shadow: inset 0 0 0 1.2px rgba(255,255,255,.45), 0 5px 0 #86b444, 0 18px 28px rgba(40,70,20,.25); }
+.fx-tk::before { content: ""; position: absolute; left: 0; right: 0; top: 44%; border-top: 2px dashed rgba(63,82,22,.45); }
+.fx-tk::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: 14%; height: 24%; background: repeating-linear-gradient(90deg, #3f5216 0 2px, transparent 2px 5px); opacity: .7; }
+.fx-bub { display: grid; place-items: center; width: 34%; aspect-ratio: 1; border-radius: 28%; color: #fff; background: var(--g-cyan); filter: none;
+  box-shadow: inset 0 0 0 1.2px rgba(255,255,255,.4), 0 5px 0 #11768e, 0 18px 28px rgba(17,118,142,.28); }
+.fx-bub .i { width: 52%; height: 52%; }
+.fx-tx { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; max-width: 30em; }
+.fx-n { font-size: 15px; font-weight: 800; letter-spacing: .12em; font-variant-numeric: tabular-nums; color: var(--accent); }
+.fx-tx h3 { font-size: clamp(32px, 3.4vw, 54px); font-weight: 800; letter-spacing: -.05em; line-height: 1; text-wrap: balance; }
+.fx-d { font-size: clamp(17px, 1.4vw, 22px); line-height: 1.4; color: var(--muted); }
 
 /* ---------- 04 · audience ---------- */
 .st-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
@@ -638,11 +631,15 @@ html.js .feat.is-on { opacity: 1; }
   .ntime { font-size: clamp(56px, 17vw, 84px); line-height: .9; letter-spacing: -.06em; color: var(--fg); }
   .src { display: none; }
   .nstep { min-height: 56svh; gap: 16px; }
-  .split { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .split-phone { order: -1; position: sticky; top: calc(58px + env(safe-area-inset-top, 0px)); z-index: 3; padding-block: 10px 30px; }
-  .split-phone { margin-inline: calc(-1 * var(--gut)); padding-inline: var(--gut); background: color-mix(in srgb, var(--bg) 78%, transparent);
-    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); -webkit-mask-image: linear-gradient(#000 calc(100% - 26px), transparent); mask-image: linear-gradient(#000 calc(100% - 26px), transparent); }
-  .sticky-phone { --pw: min(150px, 36vw, 21svh); position: relative; top: 0; }
+  .fxs { gap: 76px; }
+  .fx { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 30px; }
+  .fx:nth-child(even) .fx-fly { order: 0; }
+  .fx:nth-child(odd)  { --fx-x: -64px; }
+  .fx:nth-child(even) { --fx-x: 64px; }
+  .fx .phone { --pw: min(54vw, 236px, calc((100svh - 230px) / 2.25)); }
+  .fx-tx { align-items: center; gap: 10px; }
+  .fx-ic { right: -32%; width: 44%; }
+  .fx:nth-child(even) .fx-ic { left: -32%; }
   .hw-h { flex-direction: column; align-items: flex-start; gap: 6px; }
   .finds { display: flex; flex-direction: column; gap: 30px; }
   .fd { width: min(86%, 380px); }
@@ -656,10 +653,6 @@ html.js .feat.is-on { opacity: 1; }
   .win-pop { right: -8px; top: 10%; width: 150px; }
   .tk-pop { right: -2px; top: 10%; width: 138px; padding: 13px; }
   .tk-pop b { font-size: 19px; }
-  #features .split-phone { padding-block: 4px 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; -webkit-mask-image: none; mask-image: none; }
-  #features .sticky-phone { --pw: min(72vw, calc((100svh - 190px) / 2.1)); }
-  #features .feat { min-height: 50svh; opacity: 0 !important; }
-  .feat-cap { display: flex; }
   .ins-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .roulette { width: min(66vw, 280px); }
   .moment { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding-block: 4vh 8vh; }
@@ -739,9 +732,26 @@ html.js .feat.is-on { opacity: 1; }
 @keyframes popIn { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
 @keyframes storyIn { from { opacity: 0; transform: translateY(80px) rotate(-8deg); } to { opacity: 1; transform: none; } }
 
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .fx-fly { animation: fxIn linear both, fxOut linear both; animation-timeline: view(), view(); animation-range: entry 0% cover 40%, exit 30% exit 100%; }
+    .fx-tx { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 28%; }
+  }
+}
+@supports not (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .fx-fly { opacity: 0; translate: var(--fx-x) 140px; rotate: var(--fx-r0); scale: .8; transition: opacity .7s var(--ease), translate 1.2s var(--ease), rotate 1.2s var(--ease), scale 1.2s var(--ease); }
+    html.js .fx.is-in .fx-fly { opacity: 1; translate: 0 0; rotate: var(--fx-r1); scale: 1; }
+    html.js .fx-tx { opacity: 0; translate: 0 36px; transition: opacity .7s var(--ease) .15s, translate .9s var(--ease) .15s; }
+    html.js .fx.is-in .fx-tx { opacity: 1; translate: 0 0; }
+  }
+}
+@keyframes fxIn { from { opacity: 0; translate: var(--fx-x) 170px; rotate: var(--fx-r0); scale: .76; } to { opacity: 1; translate: 0 0; rotate: var(--fx-r1); scale: 1; } }
+@keyframes fxOut { to { transform: translateY(-90px) rotate(var(--fx-ro)) scale(.9); } }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .lev, .cue .i, .beat { animation: none; }
+  .lev, .cue .i, .beat, .fx-lev { animation: none; }
   .tilt .phone { transform: none; }
 }
 </style>
@@ -768,7 +778,6 @@ html.js .feat.is-on { opacity: 1; }
   <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></symbol>
 </svg>
 
-<div class="stage" aria-hidden="true"><div class="aura"></div><div class="bands"><i></i><i></i><i></i></div></div>
 
 <header class="dock" lang="ru">
   <div class="dock-in">
@@ -913,21 +922,17 @@ html.js .feat.is-on { opacity: 1; }
 
 <!-- 03 · idea -->
 <section id="idea" class="scene idea-scene pal-cream" data-title="Идея" data-num="03">
-  <div class="idea-track" data-fold>
-    <div class="idea-pin">
-      <div class="wrap idea-grid">
-        <header class="sh">
-          <p class="kicker"><span>03</span>Идея</p>
-          <h2 class="h2" data-split>Собрали весь досуг Москвы <em>в одном месте</em></h2>
-        </header>
-        <div class="eq" role="img" aria-label="Афиша плюс соцсеть равно ХОЧУ">
-          <div class="eq-it a"><span class="eq-ic"><img src="assets/calendar.webp" width="640" height="480" alt=""></span><span class="eq-tx"><b>Афиша</b><small>концерты, театр, билеты</small></span></div>
-          <span class="eq-op o1" aria-hidden="true">+</span>
-          <div class="eq-it b"><span class="eq-ic"><img src="assets/camera.webp" width="640" height="480" alt=""></span><span class="eq-tx"><b>Соцсеть</b><small>посты, подборки, авторские события</small></span></div>
-          <span class="eq-op o2" aria-hidden="true">=</span>
-          <div class="eq-it c"><span class="eq-ic"><img src="assets/logo.webp" width="320" height="320" alt=""></span><span class="eq-tx"><b>ХОЧУ</b></span></div>
-        </div>
-      </div>
+  <div class="wrap idea-grid">
+    <header class="sh">
+      <p class="kicker"><span>03</span>Идея</p>
+      <h2 class="h2" data-split>Собрали весь досуг Москвы <em>в одном месте</em></h2>
+    </header>
+    <div class="eq" data-build role="img" aria-label="Афиша плюс соцсеть равно ХОЧУ">
+      <div class="eq-it a"><span class="eq-ic"><img src="assets/calendar.webp" width="640" height="480" alt=""></span><span class="eq-tx"><b>Афиша</b><small>концерты, театр, билеты</small></span></div>
+      <span class="eq-op o1" aria-hidden="true">+</span>
+      <div class="eq-it b"><span class="eq-ic"><img src="assets/camera.webp" width="640" height="480" alt=""></span><span class="eq-tx"><b>Соцсеть</b><small>посты, подборки, авторские события</small></span></div>
+      <span class="eq-op o2" aria-hidden="true">=</span>
+      <div class="eq-it c"><span class="eq-ic"><img src="assets/logo.webp" width="320" height="320" alt=""></span><span class="eq-tx"><b>ХОЧУ</b></span></div>
     </div>
   </div>
 </section>
@@ -1155,29 +1160,49 @@ html.js .feat.is-on { opacity: 1; }
       <p class="kicker"><span>10</span>Функции</p>
       <h2 class="h2" data-split>Что уже умеет приложение</h2>
     </header>
-    <div class="split" data-seq>
-      <div class="split-steps">
-        <div class="feat" data-step="0"><h3><span class="n">1</span>Лента и рекомендации</h3><p>Что интересного вокруг</p></div>
-        <div class="feat" data-step="1"><h3><span class="n">2</span>Список и карта</h3><p>Всё, что рядом, с фильтрами</p></div>
-        <div class="feat" data-step="2"><h3><span class="n">3</span>Нейроподборка</h3><p>Подбирает события под настроение и повод</p></div>
-        <div class="feat" data-step="3"><h3><span class="n">4</span>Билеты</h3><p>На привычной афише или прямо в ХОЧУ</p></div>
-        <div class="feat" data-step="4"><h3><span class="n">5</span>Чаты</h3><p>Позвать своих и договориться</p></div>
-        <div class="feat" data-step="5"><h3><span class="n">6</span>Посты и события</h3><p>От блогеров и организаторов</p></div>
-      </div>
-      <div class="split-phone">
-        <div class="sticky-phone tilt">
-          <div class="halo"></div>
-          <div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen">
-            <video class="layer is-on" data-layer="0" src="assets/home.mp4" poster="assets/home.webp" muted playsinline loop preload="none" aria-label="Лента"></video>
-            <video class="layer" data-layer="1" src="assets/search.mp4" poster="assets/search.webp" muted playsinline loop preload="none" aria-label="Поиск: список и карта"></video>
-            <video class="layer" data-layer="2" src="assets/neuro.mp4" poster="assets/neuro.webp" muted playsinline loop preload="none" aria-label="Нейроподборка"></video>
-            <video class="layer" data-layer="3" src="assets/tickets.mp4" poster="assets/tickets.webp" muted playsinline loop preload="none" aria-label="Выбор, где купить билет"></video>
-            <video class="layer" data-layer="4" src="assets/chats.mp4" poster="assets/chats.webp" muted playsinline loop preload="none" aria-label="Чат: планы на вечер с друзьями"></video>
-            <video class="layer" data-layer="5" src="assets/posts.mp4" poster="assets/posts.webp" muted playsinline loop preload="none" aria-label="Пост с событием"></video>
-          </div></div>
-          <div class="feat-cap" aria-hidden="true"><b class="fc-t"></b><span class="fc-d"></span><span class="fc-dots"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+    <div class="fxs">
+      <article class="fx">
+        <div class="fx-fly">
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/home.mp4" poster="assets/home.webp" muted playsinline loop preload="none" aria-label="Лента и рекомендации"></video></div></div></div>
+          <img class="fx-ic lev" style="--dur:5.6s;--del:-1s" src="assets/heart.webp" width="640" height="640" alt="" loading="lazy">
         </div>
-      </div>
+        <div class="fx-tx"><p class="fx-n">01</p><h3>Лента и рекомендации</h3><p class="fx-d">Что интересного вокруг</p></div>
+      </article>
+      <article class="fx">
+        <div class="fx-fly">
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/search.mp4" poster="assets/search.webp" muted playsinline loop preload="none" aria-label="Список и карта"></video></div></div></div>
+          <img class="fx-ic lev" style="--dur:6.4s;--del:-3s" src="assets/map.webp" width="640" height="480" alt="" loading="lazy">
+        </div>
+        <div class="fx-tx"><p class="fx-n">02</p><h3>Список и карта</h3><p class="fx-d">Всё, что рядом, с фильтрами</p></div>
+      </article>
+      <article class="fx">
+        <div class="fx-fly">
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/neuro.mp4" poster="assets/neuro.webp" muted playsinline loop preload="none" aria-label="Нейроподборка"></video></div></div></div>
+          <img class="fx-ic lev" style="--dur:5.2s;--del:-2s" src="assets/spark.webp" width="640" height="640" alt="" loading="lazy">
+        </div>
+        <div class="fx-tx"><p class="fx-n">03</p><h3>Нейроподборка</h3><p class="fx-d">Подбирает события под настроение и повод</p></div>
+      </article>
+      <article class="fx">
+        <div class="fx-fly">
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/tickets.mp4" poster="assets/tickets.webp" muted playsinline loop preload="none" aria-label="Билеты"></video></div></div></div>
+          <i class="fx-ic fx-tk lev" style="--dur:6s;--del:-1.5s"></i>
+        </div>
+        <div class="fx-tx"><p class="fx-n">04</p><h3>Билеты</h3><p class="fx-d">На привычной афише или прямо в ХОЧУ</p></div>
+      </article>
+      <article class="fx">
+        <div class="fx-fly">
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/chats.mp4" poster="assets/chats.webp" muted playsinline loop preload="none" aria-label="Чаты"></video></div></div></div>
+          <span class="fx-ic fx-bub lev" style="--dur:5.8s;--del:-4s"><svg class="i"><use href="#i-chat"/></svg></span>
+        </div>
+        <div class="fx-tx"><p class="fx-n">05</p><h3>Чаты</h3><p class="fx-d">Позвать своих и договориться</p></div>
+      </article>
+      <article class="fx">
+        <div class="fx-fly">
+          <div class="fx-lev"><div class="halo"></div><div class="phone" title="Нажмите, чтобы остановить или запустить видео"><div class="screen"><video src="assets/posts.mp4" poster="assets/posts.webp" muted playsinline loop preload="none" aria-label="Посты и события"></video></div></div></div>
+          <img class="fx-ic lev" style="--dur:6.6s;--del:-2.5s" src="assets/camera.webp" width="640" height="480" alt="" loading="lazy">
+        </div>
+        <div class="fx-tx"><p class="fx-n">06</p><h3>Посты и события</h3><p class="fx-d">От блогеров и организаторов</p></div>
+      </article>
     </div>
   </div>
 </section>
@@ -1268,12 +1293,12 @@ html.js .feat.is-on { opacity: 1; }
   if (reduceMQ.addEventListener) reduceMQ.addEventListener('change', e => { reduce = e.matches; });
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const scenes = [...d.querySelectorAll('main > .scene')];
-  const stage = d.querySelector('.stage');
+  const themeMeta = d.querySelector('meta[name="theme-color"]');
   const bar = d.querySelector('.dock .bar');
   const chapNum = d.getElementById('chapNum'), chapName = d.getElementById('chapName'), chap = chapName.parentElement;
   const KEYS = ['bg', 'fg', 'muted', 'accent', 'aura', 'band', 'card', 'line'];
-  const BANDS = [[0,0,0],[-7,5,-9],[9,-5,6],[-11,7,-4],[5,-9,10],[-5,10,-7],[11,-7,5],[-9,3,9],[7,-11,-3],[-3,9,-11],[9,5,-7],[-7,-7,7],[3,11,-9],[-11,-3,5],[7,7,-11],[0,0,0]];
   const AURA = [[74,46],[22,30],[72,40],[28,62],[76,56],[24,34],[62,30],[40,64],[72,44],[30,50],[76,50],[24,40],[66,34],[36,56],[72,40],[50,52]];
+  scenes.forEach((s, i) => { const a = AURA[i % AURA.length]; s.style.setProperty('--ax', a[0] + '%'); s.style.setProperty('--ay', a[1] + '%'); });
 
   /* split headings into words for the scroll-tied reveal */
   const canScrollAnim = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: view()'));
@@ -1345,9 +1370,8 @@ html.js .feat.is-on { opacity: 1; }
     if (!reduce) { chap.classList.remove('swap'); void chap.offsetWidth; chap.classList.add('swap'); }
     dots.forEach((b, j) => b.setAttribute('aria-current', j === i ? 'true' : 'false'));
     tocItems.forEach((b, j) => b.setAttribute('aria-current', j === i ? 'true' : 'false'));
-    const b = BANDS[i % BANDS.length], a = AURA[i % AURA.length];
-    stage.style.setProperty('--b1', b[0] + 'vh'); stage.style.setProperty('--b2', b[1] + 'vh'); stage.style.setProperty('--b3', b[2] + 'vh');
-    stage.style.setProperty('--ax', a[0]); stage.style.setProperty('--ay', a[1]);
+    /* browsers that colour their bars from theme-color follow the chapter */
+    if (themeMeta) { const bg = cs.getPropertyValue('--s-bg').trim(); if (bg) themeMeta.setAttribute('content', bg); }
   };
   const sceneIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setActive(scenes.indexOf(e.target)); }), { rootMargin: '-50% 0px -49% 0px' });
   scenes.forEach(s => sceneIO.observe(s));
@@ -1438,30 +1462,34 @@ html.js .feat.is-on { opacity: 1; }
     }
   };
 
-  /* idea: while the chapter is pinned, the scroll builds «афиша + соцсеть = ХОЧУ» */
-  const folds = [...d.querySelectorAll('[data-fold]')].map(t => ({ t, st: t.querySelector('.eq') }));
+  /* idea: «афиша + соцсеть = ХОЧУ» builds up while it rises through the screen, and stays built */
+  const builds = [...d.querySelectorAll('[data-build]')];
   const clamp01 = v => Math.max(0, Math.min(1, v));
   const backOut = v => { const c = 1.9; return 1 + (c + 1) * Math.pow(v - 1, 3) + c * Math.pow(v - 1, 2); };
-  const updateFold = () => {
-    for (const f of folds) {
-      const r = f.t.getBoundingClientRect(), span = r.height - innerHeight;
-      if (r.bottom < 0 || r.top > innerHeight || span <= 0) continue;
-      const p = reduce ? 1 : clamp01(-r.top / span);
-      const bv = clamp01((p - .1) / .22), cv = clamp01((p - .42) / .2);
-      f.st.style.setProperty('--b', bv.toFixed(4));
-      f.st.style.setProperty('--c', cv.toFixed(4));
-      f.st.style.setProperty('--cs', (cv === 0 ? 0 : backOut(cv)).toFixed(4));
+  const updateBuild = () => {
+    const vh = innerHeight;
+    for (const el of builds) {
+      const r = el.getBoundingClientRect(), mid = r.top + r.height / 2;
+      const p = reduce ? 1 : clamp01((vh * 0.95 - mid) / (vh * 0.42));
+      const bv = clamp01((p - .06) / .34), cv = clamp01((p - .48) / .34);
+      el.style.setProperty('--b', bv.toFixed(4));
+      el.style.setProperty('--c', cv.toFixed(4));
+      el.style.setProperty('--cs', (cv === 0 ? 0 : backOut(cv)).toFixed(4));
     }
   };
 
-  /* gentle parallax, progress line */
-  const par = [...d.querySelectorAll('[data-par]')];
+  /* features: where scrolling cannot drive the animation, each phone flies in once as it shows up */
+  const fxIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); fxIO.unobserve(e.target); } }), { threshold: 0.15 });
+  d.querySelectorAll('.fx').forEach(f => fxIO.observe(f));
+
+  /* gentle parallax (desktop only: on phones it fights the native scroll), progress line */
+  const par = fine ? [...d.querySelectorAll('[data-par]')] : [];
   let ticking = false;
   const frame = () => {
     ticking = false;
     const vh = innerHeight, max = root.scrollHeight - vh;
     updateSeqs();
-    updateFold();
+    updateBuild();
     if (bar) bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, scrollY / max) : 0).toFixed(4) + ')';
     if (reduce) return;
     for (const el of par) {
