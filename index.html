@@ -81,7 +81,7 @@ html:not(.js) .scene { --bg: var(--s-bg); --fg: var(--s-fg); --muted: var(--s-mu
 
 /* ---------- base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; overflow-x: clip; }
+html { scroll-behavior: smooth; overflow-x: clip; background: var(--bg); }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 400 var(--t-body)/1.5 var(--font); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: clip; -webkit-text-size-adjust: 100%; }
 h1, h2, h3, p, ol, ul, dl, dd, figure, blockquote { margin: 0; }
 ol, ul { padding: 0; list-style: none; }
@@ -95,6 +95,11 @@ a { color: inherit; }
 
 /* ---------- stage: colour field, aura, diagonal light bands ---------- */
 .stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+/* iPhone Safari 26 paints its status-bar and toolbar areas with the colour of a fixed or sticky layer touching the screen edge.
+   Hidden, click-through containers are skipped, so the page itself shows through the bars; their contents stay visible. */
+.stage, .dock, .idea-pin, .split-phone { visibility: hidden; pointer-events: none; }
+.stage > *, .dock > *, .idea-pin > *, .split-phone > * { visibility: visible; }
+.split-phone .phone { pointer-events: auto; }
 .aura { position: absolute; left: 0; top: 0; width: 95vmax; height: 95vmax; border-radius: 50%; background: radial-gradient(closest-side, var(--aura), transparent); opacity: .55;
   transform: translate(calc(var(--ax, 70) * 1vw - 50%), calc(var(--ay, 45) * 1vh - 50%)); transition: transform 1.6s var(--ease); }
 .bands i { position: absolute; left: -30vw; width: 160vw; height: clamp(90px, 14vh, 170px); background: var(--band); transform: translateY(var(--y, 0px)) rotate(-23deg); transition: transform 1.8s var(--ease); }
