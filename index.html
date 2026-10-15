@@ -715,27 +715,42 @@ html.js .nstep.is-on { opacity: 1; }
 @keyframes phoneIn { from { opacity: 0; transform: translateY(70px) scale(.94); } to { opacity: 1; transform: none; } }
 @keyframes pop { from { opacity: 0; scale: .3; } to { opacity: 1; scale: 1; } }
 
-/* reveals: each block eases in once, when it first shows up (the script adds .in / .is-in), and then stays still.
-   Nothing is tied to the scroll position, so there is no pile of permanently animated layers to crash a phone. */
-@media (prefers-reduced-motion: no-preference) {
-  html.js [data-split] .w { display: inline-block; opacity: 0; translate: 0 .5em; transition: opacity .6s var(--ease), translate .8s var(--ease); transition-delay: calc(var(--i, 0) * 45ms); }
-  html.js .fill[data-split] .w { opacity: .16; translate: none; transition: opacity .5s linear; transition-delay: calc(var(--i, 0) * 70ms); }
-  html.js [data-split].in .w { opacity: 1; translate: none; }
-  html.js :is(.rv, .bubble) { transition: opacity .7s var(--ease), translate .9s var(--ease); }
-  html.js :is(.rv, .bubble):not(.in) { opacity: 0; translate: 0 56px; }
-  html.js .reel { transition: opacity .8s var(--ease), translate 1s var(--ease), transform 1s var(--ease); }
-  html.js .reel:not(.in) { opacity: 0; translate: 0 80px; transform: rotate(-8deg); }
-  html.js :is(.win-pop, .tk-pop) { transition: opacity .5s var(--ease) .35s, scale .7s var(--ease) .35s; }
-  html.js :is(.win-pop, .tk-pop):not(.in) { opacity: 0; scale: .4; }
-  html.js .fx-fly { transition: opacity .7s var(--ease), translate 1.2s var(--ease), rotate 1.2s var(--ease), scale 1.2s var(--ease); }
-  html.js .fx:not(.is-in) .fx-fly { opacity: 0; translate: var(--fx-x) 140px; rotate: var(--fx-r0); scale: .8; }
-  html.js .fx-tx { transition: opacity .7s var(--ease) .15s, translate .9s var(--ease) .15s; }
-  html.js .fx:not(.is-in) .fx-tx { opacity: 0; translate: 0 36px; }
+/* scroll-told reveals: tied to the scroll position, so nothing rebuilds itself after scrolling stops.
+   They run only for blocks within about a screen of the viewport (the script marks them .near);
+   further away everything rests in its final look, so a phone keeps no pile of animated layers. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-split] .w { display: inline-block; }
+    [data-split].near .w { animation: wIn linear both; animation-timeline: view(); animation-range: entry 0% cover 26%; }
+    .fill[data-split].near .w { animation-name: wFill; animation-range: cover 16% cover 40%; }
+    .rv.near { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 22%; }
+    .reel.near { animation: storyIn linear both; animation-timeline: view(); animation-range: entry 0% cover 30%; }
+    :is(.win-pop, .tk-pop).near { animation: popIn linear both; animation-timeline: view(); animation-range: entry 40% cover 45%; }
+    .bubble.near { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 24%; }
+    .fx.near .fx-fly { animation: fxIn linear both, fxOut linear both; animation-timeline: view(), view(); animation-range: entry 0% cover 40%, exit 30% exit 100%; }
+    .fx.near .fx-tx { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 0% cover 28%; }
+  }
+}
+@keyframes wIn { from { opacity: 0; transform: translateY(.5em); } to { opacity: 1; transform: none; } }
+@keyframes wFill { from { opacity: .16; } to { opacity: 1; } }
+@keyframes rvIn { from { opacity: 0; transform: translateY(56px); } to { opacity: 1; transform: none; } }
+@keyframes popIn { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+@keyframes storyIn { from { opacity: 0; transform: translateY(80px) rotate(-8deg); } to { opacity: 1; transform: none; } }
+@keyframes fxIn { from { opacity: 0; translate: var(--fx-x) 170px; rotate: var(--fx-r0); scale: .76; } to { opacity: 1; translate: 0 0; rotate: var(--fx-r1); scale: 1; } }
+@keyframes fxOut { to { transform: translateY(-90px) rotate(var(--fx-ro)) scale(.9); } }
+/* where scrolling cannot drive animation, each feature phone flies in once as it shows up */
+@supports not (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html.js .fx-fly { opacity: 0; translate: var(--fx-x) 140px; rotate: var(--fx-r0); scale: .8; transition: opacity .7s var(--ease), translate 1.2s var(--ease), rotate 1.2s var(--ease), scale 1.2s var(--ease); }
+    html.js .fx.is-in .fx-fly { opacity: 1; translate: 0 0; rotate: var(--fx-r1); scale: 1; }
+    html.js .fx-tx { opacity: 0; translate: 0 36px; transition: opacity .7s var(--ease) .15s, translate .9s var(--ease) .15s; }
+    html.js .fx.is-in .fx-tx { opacity: 1; translate: 0 0; }
+  }
 }
 /* chapters far from the screen rest: looping motion stops until the chapter comes near again */
 html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: none; }
 /* while chapters flick past quickly the colours switch at once instead of animating every frame */
-:root.snap { transition: none; }
+:root.pal-instant { transition: none; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -1287,7 +1302,6 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
   /* split headings into words for the scroll-tied reveal */
   const canScrollAnim = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: view()'));
   const split = el => {
-    let wi = 0;
     const walk = node => {
       [...node.childNodes].forEach(n => {
         if (n.nodeType === 3) {
@@ -1296,7 +1310,7 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
           parts.forEach(p => {
             if (!p) return;
             if (/^[ \t\r\n]+$/.test(p)) frag.appendChild(d.createTextNode(' '));
-            else { const s = d.createElement('span'); s.className = 'w'; s.style.setProperty('--i', wi++); s.textContent = p; frag.appendChild(s); }
+            else { const s = d.createElement('span'); s.className = 'w'; s.textContent = p; frag.appendChild(s); }
           });
           n.replaceWith(frag);
         } else if (n.nodeType === 1) walk(n);
@@ -1304,7 +1318,7 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
     };
     walk(el);
   };
-  if (!reduce) d.querySelectorAll('[data-split]').forEach(split);
+  if (canScrollAnim && !reduce) d.querySelectorAll('[data-split]').forEach(split);
 
   /* chapter dots */
   const nav = d.querySelector('.dots');
@@ -1349,7 +1363,7 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
     if (i < 0 || i === active) return;
     active = i;
     const now = performance.now();
-    if (now - lastSwitch < 900) { root.classList.add('snap'); clearTimeout(calmT); calmT = setTimeout(() => root.classList.remove('snap'), 900); }
+    if (now - lastSwitch < 900) { root.classList.add('pal-instant'); clearTimeout(calmT); calmT = setTimeout(() => root.classList.remove('pal-instant'), 900); }
     lastSwitch = now;
     const s = scenes[i], cs = getComputedStyle(s);
     KEYS.forEach(k => { const v = cs.getPropertyValue('--s-' + k).trim(); if (v) root.style.setProperty('--' + k, v); });
@@ -1365,9 +1379,15 @@ html.js .scene.idle :is(.lev, .fx-lev, .beat, .rl-strip, .cue .i) { animation: n
   scenes.forEach(s => sceneIO.observe(s));
   setActive(0);
 
-  /* one-shot reveals */
-  const revealIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revealIO.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
-  d.querySelectorAll('[data-split], .rv, .bubble, .reel, .win-pop, .tk-pop').forEach(el => revealIO.observe(el));
+  /* scroll-tied reveals are switched on only near the screen (about a screen above and below);
+     the first pass is synchronous so nothing flickers on load */
+  if (canScrollAnim && !reduce) {
+    const nearEls = [...d.querySelectorAll('[data-split], .rv, .bubble, .reel, .win-pop, .tk-pop, .fx')];
+    const vh0 = innerHeight;
+    nearEls.forEach(el => { const r = el.getBoundingClientRect(); if (r.bottom > -vh0 && r.top < vh0 * 2) el.classList.add('near'); });
+    const nearElIO = new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('near', e.isIntersecting)), { rootMargin: '100% 0px' });
+    nearEls.forEach(el => nearElIO.observe(el));
+  }
   /* intro animations let go once they finish, so nothing stays on its own layer */
   d.querySelectorAll('.hero .eyebrow, .hero .h1 .w, .hero .lead, .hero-actions, .hero .phone-wrap, .pop, .cue').forEach(el =>
     el.addEventListener('animationend', e => { if (e.target === el) el.style.animation = 'none'; }));
